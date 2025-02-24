@@ -81,7 +81,7 @@
 </head>
 <body>
   <div class="index">
-    <h1>My Song List</h1>
+    <h1>My Playlist Songs</h1>
     <div style="display: flex; gap: 10px;">
       <button class="add-button" onclick="showEditor()" ontouchstart="showEditor()">Add New</button>
       <button class="sync-button" onclick="downloadUpdatedHTML()" ontouchstart="downloadUpdatedHTML()">Sync to GitHub</button>
@@ -1079,4 +1079,413 @@
               '<p><span class="chord">[Dm]</span> I wanna see it painted, Painted black</p>' +
               '<p><span class="chord">[Dm]</span> Black as night, Black as coal</p>' +
               '<p><span class="chord">[Dm]</span> I wanna see the sun, Blotted out from the sky</p>' +
-              '<p><span class="chord">[Dm]</span> I wanna see it painted, Painted,
+              '<p><span class="chord">[Dm]</span> I wanna see it painted, Painted, painted <span class="highlight-text">Painted black, yeah</span></p>' +
+            '</td>' +
+          '</tr>' +
+          '<tr>' +
+            '<td>' +
+              '<p class="verse-title">3rd</p>' +
+              '<p><span class="chord">[Dm]</span> I look inside myself, And see my heart is black</p>' +
+              '<p>I see my red door, I must have it painted black</p>' +
+              '<p>Maybe then, I\'ll fade away, And not have to face the facts</p>' +
+              '<p>It\'s not easy facing up, When your whole world is black</p>' +
+            '</td>' +
+            '<td>' +
+              '<p class="verse-title">4th</p>' +
+              '<p><span class="chord">[Dm]</span> No more will my green sea, Go turn a deeper blue</p>' +
+              '<p>I could not foresee this thing, Happening to you</p>' +
+              '<p><span class="chord">[A]</span> If I look hard enough, Into the setting sun</p>' +
+              '<p>My love will laugh with me, Before the morning comes</p>' +
+            '</td>' +
+          '</tr>' +
+          '<tr>' +
+            '<td colspan="2" class="chorus highlight">' +
+              '<p><span class="chord">[Dm]</span> I wanna see it painted, Painted black</p>' +
+              '<p><span class="chord">[Dm]</span> Black as night, Black as coal</p>' +
+              '<p><span class="chord">[Dm]</span> I wanna see the sun, Blotted out from the sky</p>' +
+              '<p><span class="chord">[Dm]</span> I wanna see it painted, Painted, painted <span class="highlight-text">Painted black, yeah</span></p>' +
+            '</td>' +
+          '</tr>' +
+        '</table>'
+      },
+      'rollinginthedeep': {
+        title: 'Rolling in the Deep',
+        capo: 'Capo 3rd Am Em G Em G / F G Em/E F / Am G F G / F G Am G',
+        lyrics: '<table>' +
+          '<tr>' +
+            '<td>' +
+              '<p class="verse-title">1st</p>' +
+              '<p><span class="chord">[Am]</span> There\'s a fire starting in my heart,</p>' +
+              '<p>Reaching a fever pitch, it\'s bringing me out the dark</p>' +
+              '<p>Finally I can see you crystal clear</p>' +
+              '<p><span class="chord">[Am]</span> Go ahead and sell me out and I\'ll lay your ship bare</p>' +
+            '</td>' +
+            '<td>' +
+              '<p class="verse-title">2nd</p>' +
+              '<p><span class="chord">[Em]</span> See how I\'ll leave with every piece of you</p>' +
+              '<p>Don\'t <span class="highlight-text">underestimate</span> the things that I will do</p>' +
+              '<p>There\'s a fire starting in my heart</p>' +
+              '<p>Reaching a fever pitch and it\'s bringing me out the dark</p>' +
+            '</td>' +
+          '</tr>' +
+          '<tr>' +
+            '<td colspan="2" class="chorus highlight">' +
+              '<p>The scars of your love remind me of us, The scars of your love remind me of us, The scars of your love they leave me breathless</p>' +
+              '<p>I can\'t help feeling</p>' +
+              '<p>We could\'ve had it all, Rolling in the deep, You had my heart inside of your hand, And you played it to the beat</p>' +
+            '</td>' +
+          '</tr>' +
+          '<tr>' +
+            '<td>' +
+              '<p class="verse-title">3rd</p>' +
+              '<p><span class="chord">[Am]</span> Baby, I have no story to be told,</p>' +
+              '<p>But I\'ve heard one about you, now I\'m gonna make your head burn</p>' +
+              '<p>Think of me in the depths of your despair</p>' +
+              '<p>Make a home down there, as mine sure won\'t be shared</p>' +
+            '</td>' +
+            '<td>' +
+              '<p class="verse-title">4th</p>' +
+              '<p><span class="chord">[Am]</span> Throw your soul through every open door</p>' +
+              '<p>Count your blessings to find what you look for</p>' +
+              '<p>Turn my sorrow into treasured gold</p>' +
+              '<p>Pay me back in kind and reap just what you\'ve sown</p>' +
+            '</td>' +
+          '</tr>' +
+          '<tr>' +
+            '<td colspan="2" class="chorus highlight">' +
+              '<p>You\'re gonna wish you, never had met me</p>' +
+              '<p>Could have had it all...</p>' +
+            '</td>' +
+          '</tr>' +
+        '</table>'
+      },
+      'iwillsurvive': {
+        title: 'I Will Survive',
+        capo: 'Capo 2 / Am Dm G C',
+        lyrics: '<table>' +
+          '<tr>' +
+            '<td>' +
+              '<p class="verse-title">1st</p>' +
+              '<p>Sample Text for 1st Stanza</p>' +
+            '</td>' +
+            '<td>' +
+              '<p class="verse-title">2nd</p>' +
+              '<p>Sample text for 2nd</p>' +
+            '</td>' +
+          '</tr>' +
+          '<tr>' +
+            '<td colspan="2" class="chorus highlight">' +
+              '<p>Sample chorus</p>' +
+            '</td>' +
+          '</tr>' +
+        '</table>'
+      }
+    };
+
+    // Save songs to localStorage when updated
+    function saveSongs() {
+      localStorage.setItem('songs', JSON.stringify(songs));
+    }
+
+    // Load songs from localStorage and update the song list
+    function loadSongs() {
+      const storedSongs = JSON.parse(localStorage.getItem('songs'));
+      if (storedSongs) {
+        songs = storedSongs;
+      }
+      updateSongList();
+    }
+
+    // Call loadSongs when the page loads
+    window.onload = loadSongs;
+
+    function showLyrics(songKey) {
+      const song = songs[songKey];
+      document.getElementById('songTitle').textContent = song.title;
+      document.getElementById('songCapo').textContent = song.capo || '';
+      document.getElementById('lyrics').innerHTML = song.lyrics;
+      document.querySelector('.index').style.display = 'none';
+      document.querySelector('.lyrics').style.display = 'block';
+    }
+
+    function showIndex() {
+      document.querySelector('.index').style.display = 'block';
+      document.querySelector('.lyrics').style.display = 'none';
+      document.querySelector('.editor').style.display = 'none';
+      document.getElementById('lyrics').innerHTML = '';
+      document.getElementById('songTitle').textContent = '';
+      document.getElementById('songCapo').textContent = '';
+    }
+
+    function showEditor() {
+      document.querySelector('.index').style.display = 'none';
+      document.querySelector('.lyrics').style.display = 'none';
+      document.querySelector('.editor').style.display = 'block';
+      document.getElementById('newSongTitle').value = '';
+      document.getElementById('newSongCapo').value = '';
+      document.getElementById('stanza1').value = '';
+      document.getElementById('stanza2').value = '';
+      document.getElementById('chorus1').value = '';
+      document.getElementById('stanza3').value = '';
+      document.getElementById('stanza4').value = '';
+      document.getElementById('chorus2').value = '';
+    }
+
+    function addSong() {
+      const title = document.getElementById('newSongTitle').value.trim().toLowerCase().replace(' ', '');
+      const capo = document.getElementById('newSongCapo').value;
+      let formattedLyrics = '<table>';
+
+      function formatLines(textareaId, isChorus = false) {
+        const lines = document.getElementById(textareaId).value.split('\n').map(line => line.trim()).filter(line => line);
+        return lines.map(line => {
+          if (isChorus && line.includes('*')) {
+            return '<p>' + line.replace('[', '<span class="chord">[').replace(']', ']</span>').replace('*', '<span class="highlight-text">') + '</span></p>';
+          }
+          return '<p>' + line.replace('[', '<span class="chord">[').replace(']', ']</span>') + '</p>';
+        }).join('');
+      }
+
+      let hasContent = false;
+
+      const stanza1 = document.getElementById('stanza1').value.trim();
+      const stanza2 = document.getElementById('stanza2').value.trim();
+      if (stanza1 || stanza2) {
+        formattedLyrics += '<tr>';
+        if (stanza1) {
+          formattedLyrics += '<td>' +
+            '<p class="verse-title">1st</p>' +
+            formatLines('stanza1') +
+            '</td>';
+          hasContent = true;
+        } else {
+          formattedLyrics += '<td></td>';
+        }
+        if (stanza2) {
+          formattedLyrics += '<td>' +
+            '<p class="verse-title">2nd</p>' +
+            formatLines('stanza2') +
+            '</td>';
+          hasContent = true;
+        } else {
+          formattedLyrics += '<td></td>';
+        }
+        formattedLyrics += '</tr>';
+      }
+
+      const chorus1 = document.getElementById('chorus1').value.trim();
+      if (chorus1) {
+        formattedLyrics += '<tr>' +
+          '<td colspan="2" class="chorus highlight">' +
+            formatLines('chorus1', true) +
+            '</td>' +
+          '</tr>';
+        hasContent = true;
+      }
+
+      const stanza3 = document.getElementById('stanza3').value.trim();
+      const stanza4 = document.getElementById('stanza4').value.trim();
+      if (stanza3 || stanza4) {
+        formattedLyrics += '<tr>';
+        if (stanza3) {
+          formattedLyrics += '<td>' +
+            '<p class="verse-title">3rd</p>' +
+            formatLines('stanza3') +
+            '</td>';
+          hasContent = true;
+        } else {
+          formattedLyrics += '<td></td>';
+        }
+        if (stanza4) {
+          formattedLyrics += '<td>' +
+            '<p class="verse-title">4th</p>' +
+            formatLines('stanza4') +
+            '</td>';
+          hasContent = true;
+        } else {
+          formattedLyrics += '<td></td>';
+        }
+        formattedLyrics += '</tr>';
+      }
+
+      const chorus2 = document.getElementById('chorus2').value.trim();
+      if (chorus2) {
+        formattedLyrics += '<tr>' +
+          '<td colspan="2" class="chorus highlight">' +
+            formatLines('chorus2', true) +
+            '</td>' +
+          '</tr>';
+        hasContent = true;
+      }
+
+      formattedLyrics += '</table>';
+
+      if (!hasContent) {
+        alert('Please provide at least one stanza or chorus.');
+        return;
+      }
+
+      songs[title] = {
+        title: document.getElementById('newSongTitle').value,
+        capo: capo,
+        lyrics: formattedLyrics
+      };
+      saveSongs(); // Save to localStorage
+      updateSongList();
+      showIndex();
+    }
+
+    function updateSongList() {
+      const songList = document.getElementById('songList');
+      songList.innerHTML = '';
+      for (let key in songs) {
+        songList.innerHTML += `<li onclick="showLyrics('${key}')" ontouchstart="showLyrics('${key}')">${songs[key].title}</li>`;
+      }
+    }
+
+    // Service Worker registration for PWA (offline capability)
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/service-worker.js')
+          .then(registration => {
+            console.log('Service Worker registered with scope:', registration.scope);
+          })
+          .catch(error => {
+            console.error('Service Worker registration failed:', error);
+          });
+      });
+    }
+
+    // Load songs from localStorage or use default if none exist
+    let songs = JSON.parse(localStorage.getItem('songs')) || {
+      'paintitblack': {
+        title: 'Paint it Black',
+        capo: 'Capo 2 / Dm A / Dm C F C Dm / Dm C F G A',
+        lyrics: '<table>' +
+          '<tr>' +
+            '<td>' +
+              '<p class="verse-title">1st</p>' +
+              '<p><span class="chord">[Dm]</span> I see a red door, And I want it painted black</p>' +
+              '<p>No colors anymore, I want them to turn black</p>' +
+              '<p><span class="chord">[A]</span> I see the girls walk by, Dressed in their summer clothes</p>' +
+              '<p>I have to turn my head, Until my darkness goes</p>' +
+            '</td>' +
+            '<td>' +
+              '<p class="verse-title">2nd</p>' +
+              '<p><span class="chord">[Dm]</span> I see a line of cars, And they\'re all painted black</p>' +
+              '<p>With flowers and my love, Both never to come back</p>' +
+              '<p><span class="chord">[A]</span> I see people turn their heads, And quickly look away</p>' +
+              '<p>Like a newborn baby, It just happens everyday</p>' +
+            '</td>' +
+          '</tr>' +
+          '<tr>' +
+            '<td colspan="2" class="chorus highlight">' +
+              '<p><span class="chord">[Dm]</span> I wanna see it painted, Painted black</p>' +
+              '<p><span class="chord">[Dm]</span> Black as night, Black as coal</p>' +
+              '<p><span class="chord">[Dm]</span> I wanna see the sun, Blotted out from the sky</p>' +
+              '<p><span class="chord">[Dm]</span> I wanna see it painted, Painted, painted <span class="highlight-text">Painted black, yeah</span></p>' +
+            '</td>' +
+          '</tr>' +
+          '<tr>' +
+            '<td>' +
+              '<p class="verse-title">3rd</p>' +
+              '<p><span class="chord">[Dm]</span> I look inside myself, And see my heart is black</p>' +
+              '<p>I see my red door, I must have it painted black</p>' +
+              '<p>Maybe then, I\'ll fade away, And not have to face the facts</p>' +
+              '<p>It\'s not easy facing up, When your whole world is black</p>' +
+            '</td>' +
+            '<td>' +
+              '<p class="verse-title">4th</p>' +
+              '<p><span class="chord">[Dm]</span> No more will my green sea, Go turn a deeper blue</p>' +
+              '<p>I could not foresee this thing, Happening to you</p>' +
+              '<p><span class="chord">[A]</span> If I look hard enough, Into the setting sun</p>' +
+              '<p>My love will laugh with me, Before the morning comes</p>' +
+            '</td>' +
+          '</tr>' +
+          '<tr>' +
+            '<td colspan="2" class="chorus highlight">' +
+              '<p><span class="chord">[Dm]</span> I wanna see it painted, Painted black</p>' +
+              '<p><span class="chord">[Dm]</span> Black as night, Black as coal</p>' +
+              '<p><span class="chord">[Dm]</span> I wanna see the sun, Blotted out from the sky</p>' +
+              '<p><span class="chord">[Dm]</span> I wanna see it painted, Painted, painted <span class="highlight-text">Painted black, yeah</span></p>' +
+            '</td>' +
+          '</tr>' +
+        '</table>'
+      },
+      'rollinginthedeep': {
+        title: 'Rolling in the Deep',
+        capo: 'Capo 3rd Am Em G Em G / F G Em/E F / Am G F G / F G Am G',
+        lyrics: '<table>' +
+          '<tr>' +
+            '<td>' +
+              '<p class="verse-title">1st</p>' +
+              '<p><span class="chord">[Am]</span> There\'s a fire starting in my heart,</p>' +
+              '<p>Reaching a fever pitch, it\'s bringing me out the dark</p>' +
+              '<p>Finally I can see you crystal clear</p>' +
+              '<p><span class="chord">[Am]</span> Go ahead and sell me out and I\'ll lay your ship bare</p>' +
+            '</td>' +
+            '<td>' +
+              '<p class="verse-title">2nd</p>' +
+              '<p><span class="chord">[Em]</span> See how I\'ll leave with every piece of you</p>' +
+              '<p>Don\'t <span class="highlight-text">underestimate</span> the things that I will do</p>' +
+              '<p>There\'s a fire starting in my heart</p>' +
+              '<p>Reaching a fever pitch and it\'s bringing me out the dark</p>' +
+            '</td>' +
+          '</tr>' +
+          '<tr>' +
+            '<td colspan="2" class="chorus highlight">' +
+              '<p>The scars of your love remind me of us, The scars of your love remind me of us, The scars of your love they leave me breathless</p>' +
+              '<p>I can\'t help feeling</p>' +
+              '<p>We could\'ve had it all, Rolling in the deep, You had my heart inside of your hand, And you played it to the beat</p>' +
+            '</td>' +
+          '</tr>' +
+          '<tr>' +
+            '<td>' +
+              '<p class="verse-title">3rd</p>' +
+              '<p><span class="chord">[Am]</span> Baby, I have no story to be told,</p>' +
+              '<p>But I\'ve heard one about you, now I\'m gonna make your head burn</p>' +
+              '<p>Think of me in the depths of your despair</p>' +
+              '<p>Make a home down there, as mine sure won\'t be shared</p>' +
+            '</td>' +
+            '<td>' +
+              '<p class="verse-title">4th</p>' +
+              '<p><span class="chord">[Am]</span> Throw your soul through every open door</p>' +
+              '<p>Count your blessings to find what you look for</p>' +
+              '<p>Turn my sorrow into treasured gold</p>' +
+              '<p>Pay me back in kind and reap just what you\'ve sown</p>' +
+            '</td>' +
+          '</tr>' +
+          '<tr>' +
+            '<td colspan="2" class="chorus highlight">' +
+              '<p>You\'re gonna wish you, never had met me</p>' +
+              '<p>Could have had it all...</p>' +
+            '</td>' +
+          '</tr>' +
+        '</table>'
+      },
+      'iwillsurvive': {
+        title: 'I Will Survive',
+        capo: 'Capo 2 / Am Dm G C',
+        lyrics: '<table>' +
+          '<tr>' +
+            '<td>' +
+              '<p class="verse-title">1st</p>' +
+              '<p>Sample Text for 1st Stanza</p>' +
+            '</td>' +
+            '<td>' +
+              '<p class="verse-title">2nd</p>' +
+              '<p>Sample text for 2nd</p>' +
+            '</td>' +
+          '</tr>' +
+          '<tr>' +
+            '<td colspan="2" class="chorus highlight">' +
+              '<p>Sample chorus</p>' +
+            '</td>' +
+          '</tr>' +
+        '</table>'
+      }
+    };
+
+    // Save songs to localStorage when updated
+    function saveSongs() {
+      localStorage.setItem('songs', JSON.stringify
