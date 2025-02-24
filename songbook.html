@@ -3,22 +3,22 @@
 <head>
   <title>My Songbook</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <meta name="apple-mobile-web-app-capable" content="yes"> <!-- Enable standalone mode on iOS -->
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"> <!-- Customize status bar on iOS -->
-  <meta name="apple-mobile-web-app-title" content="My Songbook"> <!-- Title for iOS home screen -->
-  <link rel="manifest" href="/manifest.json"> <!-- Link to PWA manifest -->
-  <link rel="apple-touch-icon" href="/icon.png"> <!-- iOS app icon (you’ll create this later) -->
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="My Songbook">
+  <link rel="manifest" href="/manifest.json">
+  <link rel="apple-touch-icon" href="/icon.png">
   <style>
     body { font-family: Arial, sans-serif; margin: 0; padding: 20px; }
     .index { display: block; }
     .lyrics { display: none; }
     .editor { display: none; }
     ul { list-style-type: none; padding: 0; }
-    li { cursor: pointer; margin: 10px 0; font-size: 18px; padding: 10px; } /* Increased padding for touch targets */
-    li:hover, li:active { color: blue; } /* Added :active for touch feedback */
+    li { cursor: pointer; margin: 10px 0; font-size: 18px; padding: 10px; }
+    li:hover, li:active { color: blue; }
     .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
     h1 { margin: 0; }
-    .back-button, .add-button { 
+    .back-button, .add-button, .sync-button { 
       background-color: #4CAF50; 
       color: white; 
       padding: 15px 30px; 
@@ -26,10 +26,10 @@
       border-radius: 5px; 
       cursor: pointer; 
       font-size: 16px; 
-      min-width: 120px; /* Ensure minimum touch target size */
-      min-height: 44px; /* Ensure minimum touch target size */
+      min-width: 120px; 
+      min-height: 44px; 
     }
-    .back-button:hover, .add-button:hover, .back-button:active, .add-button:active { background-color: #45a049; } /* Added :active for touch feedback */
+    .back-button:hover, .add-button:hover, .sync-button:hover, .back-button:active, .add-button:active, .sync-button:active { background-color: #45a049; }
     table {
       border-collapse: collapse;
       width: 80%;
@@ -43,8 +43,8 @@
     .chord { color: blue; font-weight: bold; }
     .verse-title { background-color: #f0f0f0; font-weight: bold; }
     .chorus { background-color: #ffe0e0; text-align: center; }
-    .highlight { background-color: #e6e6fa; } /* Light purple background for chorus and highlighted text */
-    .highlight-text { background-color: #e6e6fa; } /* Highlight specific text within chorus */
+    .highlight { background-color: #e6e6fa; }
+    .highlight-text { background-color: #e6e6fa; }
     .editor-form { 
       margin-top: 20px; 
       padding: 20px; 
@@ -66,23 +66,26 @@
       border-radius: 5px; 
       cursor: pointer; 
       margin-right: 10px; 
-      min-width: 100px; /* Ensure minimum touch target size */
-      min-height: 44px; /* Ensure minimum touch target size */
+      min-width: 100px; 
+      min-height: 44px; 
     }
-    .editor-form button:hover, .editor-form button:active { background-color: #006d9c; } /* Added :active for touch feedback */
+    .editor-form button:hover, .editor-form button:active { background-color: #006d9c; }
     @media (prefers-color-scheme: dark) {
       body { background-color: #1a1a1a; color: #ffffff; }
       .verse-title { background-color: #333; }
       .chorus { background-color: #4a4a4a; }
-      .highlight, .highlight-text { background-color: #4a4a4a; } /* Adjust for dark mode */
+      .highlight, .highlight-text { background-color: #4a4a4a; }
       table, td { border-color: #444; }
     }
   </style>
 </head>
 <body>
   <div class="index">
-    <h1>My PlayList</h1>
-    <button class="add-button" onclick="showEditor()" ontouchstart="showEditor()">Add New</button>
+    <h1>My Playlist</h1>
+    <div style="display: flex; gap: 10px;">
+      <button class="add-button" onclick="showEditor()" ontouchstart="showEditor()">Add New</button>
+      <button class="sync-button" onclick="downloadUpdatedHTML()" ontouchstart="downloadUpdatedHTML()">Sync to GitHub</button>
+    </div>
     <ul id="songList">
       <li onclick="showLyrics('paintitblack')" ontouchstart="showLyrics('paintitblack')">Paint it Black</li>
       <li onclick="showLyrics('rollinginthedeep')" ontouchstart="showLyrics('rollinginthedeep')">Rolling in the Deep</li>
@@ -124,20 +127,8 @@
   </div>
 
   <script>
-    // Service Worker registration for PWA (offline capability)
-    if ('serviceWorker' in navigator) {
-      window.addEventListener('load', () => {
-        navigator.serviceWorker.register('/service-worker.js')
-          .then(registration => {
-            console.log('Service Worker registered with scope:', registration.scope);
-          })
-          .catch(error => {
-            console.error('Service Worker registration failed:', error);
-          });
-      });
-    }
-
-    let songs = {
+    // Load songs from localStorage or use default if none exist
+    let songs = JSON.parse(localStorage.getItem('songs')) || {
       'paintitblack': {
         title: 'Paint it Black',
         capo: 'Capo 2 / Dm A / Dm C F C Dm / Dm C F G A',
@@ -245,7 +236,7 @@
       },
       'iwillsurvive': {
         title: 'I Will Survive',
-        capo: 'Capo 2 / Am Dm G C', // Example capo, adjust as needed
+        capo: 'Capo 2 / Am Dm G C',
         lyrics: '<table>' +
           '<tr>' +
             '<td>' +
@@ -266,10 +257,317 @@
       }
     };
 
+    // Save songs to localStorage when updated
+    function saveSongs() {
+      localStorage.setItem('songs', JSON.stringify(songs));
+    }
+
+    // Load songs from localStorage and update the song list
+    function loadSongs() {
+      const storedSongs = JSON.parse(localStorage.getItem('songs'));
+      if (storedSongs) {
+        songs = storedSongs;
+      }
+      updateSongList();
+    }
+
+    // Call loadSongs when the page loads
+    window.onload = loadSongs;
+
+    // Function to download the updated HTML for manual syncing to GitHub
+    function downloadUpdatedHTML() {
+      const htmlContent = `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <title>My Songbook</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="My Songbook">
+  <link rel="manifest" href="/manifest.json">
+  <link rel="apple-touch-icon" href="/icon.png">
+  <style>
+    body { font-family: Arial, sans-serif; margin: 0; padding: 20px; }
+    .index { display: block; }
+    .lyrics { display: none; }
+    .editor { display: none; }
+    ul { list-style-type: none; padding: 0; }
+    li { cursor: pointer; margin: 10px 0; font-size: 18px; padding: 10px; }
+    li:hover, li:active { color: blue; }
+    .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+    h1 { margin: 0; }
+    .back-button, .add-button, .sync-button { 
+      background-color: #4CAF50; 
+      color: white; 
+      padding: 15px 30px; 
+      border: none; 
+      border-radius: 5px; 
+      cursor: pointer; 
+      font-size: 16px; 
+      min-width: 120px; 
+      min-height: 44px; 
+    }
+    .back-button:hover, .add-button:hover, .sync-button:hover, .back-button:active, .add-button:active, .sync-button:active { background-color: #45a049; }
+    table {
+      border-collapse: collapse;
+      width: 80%;
+      margin: 20px auto;
+    }
+    td {
+      border: 1px solid black;
+      padding: 10px;
+      vertical-align: top;
+    }
+    .chord { color: blue; font-weight: bold; }
+    .verse-title { background-color: #f0f0f0; font-weight: bold; }
+    .chorus { background-color: #ffe0e0; text-align: center; }
+    .highlight { background-color: #e6e6fa; }
+    .highlight-text { background-color: #e6e6fa; }
+    .editor-form { 
+      margin-top: 20px; 
+      padding: 20px; 
+      border: 1px solid #ccc; 
+      border-radius: 5px; 
+    }
+    .editor-form input, .editor-form textarea { 
+      width: 100%; 
+      margin: 10px 0; 
+      padding: 8px; 
+      box-sizing: border-box; 
+    }
+    .editor-form label { display: block; margin-bottom: 5px; }
+    .editor-form button { 
+      background-color: #008CBA; 
+      color: white; 
+      padding: 10px 20px; 
+      border: none; 
+      border-radius: 5px; 
+      cursor: pointer; 
+      margin-right: 10px; 
+      min-width: 100px; 
+      min-height: 44px; 
+    }
+    .editor-form button:hover, .editor-form button:active { background-color: #006d9c; }
+    @media (prefers-color-scheme: dark) {
+      body { background-color: #1a1a1a; color: #ffffff; }
+      .verse-title { background-color: #333; }
+      .chorus { background-color: #4a4a4a; }
+      .highlight, .highlight-text { background-color: #4a4a4a; }
+      table, td { border-color: #444; }
+    }
+  </style>
+</head>
+<body>
+  <div class="index">
+    <h1>My Songs</h1>
+    <div style="display: flex; gap: 10px;">
+      <button class="add-button" onclick="showEditor()" ontouchstart="showEditor()">Add New</button>
+      <button class="sync-button" onclick="downloadUpdatedHTML()" ontouchstart="downloadUpdatedHTML()">Sync to GitHub</button>
+    </div>
+    <ul id="songList">
+      ${Object.entries(songs).map(([key, song]) => `<li onclick="showLyrics('${key}')" ontouchstart="showLyrics('${key}')">${song.title}</li>`).join('')}
+    </ul>
+  </div>
+
+  <div class="lyrics">
+    <div class="header">
+      <div>
+        <h1 id="songTitle"></h1>
+        <p id="songCapo"></p>
+      </div>
+      <button class="back-button" onclick="showIndex()" ontouchstart="showIndex()">Back</button>
+    </div>
+    <div id="lyrics"></div>
+  </div>
+
+  <div class="editor">
+    <h1>Add New Song</h1>
+    <div class="editor-form">
+      <input type="text" id="newSongTitle" placeholder="Song Title" required>
+      <input type="text" id="newSongCapo" placeholder="Capo Information (e.g., Capo 3rd Am Em G)" required>
+      <label for="stanza1">1st Stanza:</label>
+      <textarea id="stanza1" placeholder="Lyrics with chords (e.g., [Am] Line 1<br>[Em] Line 2)" rows="4"></textarea>
+      <label for="stanza2">2nd Stanza:</label>
+      <textarea id="stanza2" placeholder="Lyrics with chords (e.g., [Am] Line 1<br>[Em] Line 2)" rows="4"></textarea>
+      <label for="chorus1">Chorus 1 (Highlighted, specify lines to highlight with *):</label>
+      <textarea id="chorus1" placeholder="Lyrics with chords (e.g., [G] Chorus line*<br>[C] Chorus line)" rows="4"></textarea>
+      <label for="stanza3">3rd Stanza:</label>
+      <textarea id="stanza3" placeholder="Lyrics with chords (e.g., [Am] Line 1<br>[Em] Line 2)" rows="4"></textarea>
+      <label for="stanza4">4th Stanza:</label>
+      <textarea id="stanza4" placeholder="Lyrics with chords (e.g., [Am] Line 1<br>[Em] Line 2)" rows="4"></textarea>
+      <label for="chorus2">Chorus 2 (Highlighted, specify lines to highlight with *):</label>
+      <textarea id="chorus2" placeholder="Lyrics with chords (e.g., [G] Chorus line*<br>[C] Chorus line)" rows="4"></textarea>
+      <button onclick="addSong()" ontouchstart="addSong()">Save Song</button>
+      <button onclick="showIndex()" ontouchstart="showIndex()">Cancel</button>
+    </div>
+  </div>
+
+  <script>
+    // Service Worker registration for PWA (offline capability)
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/service-worker.js')
+          .then(registration => {
+            console.log('Service Worker registered with scope:', registration.scope);
+          })
+          .catch(error => {
+            console.error('Service Worker registration failed:', error);
+          });
+      });
+    }
+
+    // Load songs from localStorage or use default if none exist
+    let songs = JSON.parse(localStorage.getItem('songs')) || {
+      'paintitblack': {
+        title: 'Paint it Black',
+        capo: 'Capo 2 / Dm A / Dm C F C Dm / Dm C F G A',
+        lyrics: '<table>' +
+          '<tr>' +
+            '<td>' +
+              '<p class="verse-title">1st</p>' +
+              '<p><span class="chord">[Dm]</span> I see a red door, And I want it painted black</p>' +
+              '<p>No colors anymore, I want them to turn black</p>' +
+              '<p><span class="chord">[A]</span> I see the girls walk by, Dressed in their summer clothes</p>' +
+              '<p>I have to turn my head, Until my darkness goes</p>' +
+            '</td>' +
+            '<td>' +
+              '<p class="verse-title">2nd</p>' +
+              '<p><span class="chord">[Dm]</span> I see a line of cars, And they\'re all painted black</p>' +
+              '<p>With flowers and my love, Both never to come back</p>' +
+              '<p><span class="chord">[A]</span> I see people turn their heads, And quickly look away</p>' +
+              '<p>Like a newborn baby, It just happens everyday</p>' +
+            '</td>' +
+          '</tr>' +
+          '<tr>' +
+            '<td colspan="2" class="chorus highlight">' +
+              '<p><span class="chord">[Dm]</span> I wanna see it painted, Painted black</p>' +
+              '<p><span class="chord">[Dm]</span> Black as night, Black as coal</p>' +
+              '<p><span class="chord">[Dm]</span> I wanna see the sun, Blotted out from the sky</p>' +
+              '<p><span class="chord">[Dm]</span> I wanna see it painted, Painted, painted <span class="highlight-text">Painted black, yeah</span></p>' +
+            '</td>' +
+          '</tr>' +
+          '<tr>' +
+            '<td>' +
+              '<p class="verse-title">3rd</p>' +
+              '<p><span class="chord">[Dm]</span> I look inside myself, And see my heart is black</p>' +
+              '<p>I see my red door, I must have it painted black</p>' +
+              '<p>Maybe then, I\'ll fade away, And not have to face the facts</p>' +
+              '<p>It\'s not easy facing up, When your whole world is black</p>' +
+            '</td>' +
+            '<td>' +
+              '<p class="verse-title">4th</p>' +
+              '<p><span class="chord">[Dm]</span> No more will my green sea, Go turn a deeper blue</p>' +
+              '<p>I could not foresee this thing, Happening to you</p>' +
+              '<p><span class="chord">[A]</span> If I look hard enough, Into the setting sun</p>' +
+              '<p>My love will laugh with me, Before the morning comes</p>' +
+            '</td>' +
+          '</tr>' +
+          '<tr>' +
+            '<td colspan="2" class="chorus highlight">' +
+              '<p><span class="chord">[Dm]</span> I wanna see it painted, Painted black</p>' +
+              '<p><span class="chord">[Dm]</span> Black as night, Black as coal</p>' +
+              '<p><span class="chord">[Dm]</span> I wanna see the sun, Blotted out from the sky</p>' +
+              '<p><span class="chord">[Dm]</span> I wanna see it painted, Painted, painted <span class="highlight-text">Painted black, yeah</span></p>' +
+            '</td>' +
+          '</tr>' +
+        '</table>'
+      },
+      'rollinginthedeep': {
+        title: 'Rolling in the Deep',
+        capo: 'Capo 3rd Am Em G Em G / F G Em/E F / Am G F G / F G Am G',
+        lyrics: '<table>' +
+          '<tr>' +
+            '<td>' +
+              '<p class="verse-title">1st</p>' +
+              '<p><span class="chord">[Am]</span> There\'s a fire starting in my heart,</p>' +
+              '<p>Reaching a fever pitch, it\'s bringing me out the dark</p>' +
+              '<p>Finally I can see you crystal clear</p>' +
+              '<p><span class="chord">[Am]</span> Go ahead and sell me out and I\'ll lay your ship bare</p>' +
+            '</td>' +
+            '<td>' +
+              '<p class="verse-title">2nd</p>' +
+              '<p><span class="chord">[Em]</span> See how I\'ll leave with every piece of you</p>' +
+              '<p>Don\'t <span class="highlight-text">underestimate</span> the things that I will do</p>' +
+              '<p>There\'s a fire starting in my heart</p>' +
+              '<p>Reaching a fever pitch and it\'s bringing me out the dark</p>' +
+            '</td>' +
+          '</tr>' +
+          '<tr>' +
+            '<td colspan="2" class="chorus highlight">' +
+              '<p>The scars of your love remind me of us, The scars of your love remind me of us, The scars of your love they leave me breathless</p>' +
+              '<p>I can\'t help feeling</p>' +
+              '<p>We could\'ve had it all, Rolling in the deep, You had my heart inside of your hand, And you played it to the beat</p>' +
+            '</td>' +
+          '</tr>' +
+          '<tr>' +
+            '<td>' +
+              '<p class="verse-title">3rd</p>' +
+              '<p><span class="chord">[Am]</span> Baby, I have no story to be told,</p>' +
+              '<p>But I\'ve heard one about you, now I\'m gonna make your head burn</p>' +
+              '<p>Think of me in the depths of your despair</p>' +
+              '<p>Make a home down there, as mine sure won\'t be shared</p>' +
+            '</td>' +
+            '<td>' +
+              '<p class="verse-title">4th</p>' +
+              '<p><span class="chord">[Am]</span> Throw your soul through every open door</p>' +
+              '<p>Count your blessings to find what you look for</p>' +
+              '<p>Turn my sorrow into treasured gold</p>' +
+              '<p>Pay me back in kind and reap just what you\'ve sown</p>' +
+            '</td>' +
+          '</tr>' +
+          '<tr>' +
+            '<td colspan="2" class="chorus highlight">' +
+              '<p>You\'re gonna wish you, never had met me</p>' +
+              '<p>Could have had it all...</p>' +
+            '</td>' +
+          '</tr>' +
+        '</table>'
+      },
+      'iwillsurvive': {
+        title: 'I Will Survive',
+        capo: 'Capo 2 / Am Dm G C',
+        lyrics: '<table>' +
+          '<tr>' +
+            '<td>' +
+              '<p class="verse-title">1st</p>' +
+              '<p>Sample Text for 1st Stanza</p>' +
+            '</td>' +
+            '<td>' +
+              '<p class="verse-title">2nd</p>' +
+              '<p>Sample text for 2nd</p>' +
+            '</td>' +
+          '</tr>' +
+          '<tr>' +
+            '<td colspan="2" class="chorus highlight">' +
+              '<p>Sample chorus</p>' +
+            '</td>' +
+          '</tr>' +
+        '</table>'
+      }
+    };
+
+    // Save songs to localStorage when updated
+    function saveSongs() {
+      localStorage.setItem('songs', JSON.stringify(songs));
+    }
+
+    // Load songs from localStorage and update the song list
+    function loadSongs() {
+      const storedSongs = JSON.parse(localStorage.getItem('songs'));
+      if (storedSongs) {
+        songs = storedSongs;
+      }
+      updateSongList();
+    }
+
+    // Call loadSongs when the page loads
+    window.onload = loadSongs;
+
     function showLyrics(songKey) {
       const song = songs[songKey];
       document.getElementById('songTitle').textContent = song.title;
-      document.getElementById('songCapo').textContent = song.capo || ''; // Ensure capo is shown
+      document.getElementById('songCapo').textContent = song.capo || '';
       document.getElementById('lyrics').innerHTML = song.lyrics;
       document.querySelector('.index').style.display = 'none';
       document.querySelector('.lyrics').style.display = 'block';
@@ -279,9 +577,9 @@
       document.querySelector('.index').style.display = 'block';
       document.querySelector('.lyrics').style.display = 'none';
       document.querySelector('.editor').style.display = 'none';
-      document.getElementById('lyrics').innerHTML = ''; // Clear lyrics
-      document.getElementById('songTitle').textContent = ''; // Clear title
-      document.getElementById('songCapo').textContent = ''; // Clear capo
+      document.getElementById('lyrics').innerHTML = '';
+      document.getElementById('songTitle').textContent = '';
+      document.getElementById('songCapo').textContent = '';
     }
 
     function showEditor() {
@@ -303,7 +601,6 @@
       const capo = document.getElementById('newSongCapo').value;
       let formattedLyrics = '<table>';
 
-      // Function to format lines with chords and highlights
       function formatLines(textareaId, isChorus = false) {
         const lines = document.getElementById(textareaId).value.split('\n').map(line => line.trim()).filter(line => line);
         return lines.map(line => {
@@ -314,10 +611,8 @@
         }).join('');
       }
 
-      // Flag to track if there's any content
       let hasContent = false;
 
-      // Row 1: Stanza 1, Stanza 2
       const stanza1 = document.getElementById('stanza1').value.trim();
       const stanza2 = document.getElementById('stanza2').value.trim();
       if (stanza1 || stanza2) {
@@ -343,7 +638,6 @@
         formattedLyrics += '</tr>';
       }
 
-      // Row 2: Chorus 1 (Highlighted)
       const chorus1 = document.getElementById('chorus1').value.trim();
       if (chorus1) {
         formattedLyrics += '<tr>' +
@@ -354,7 +648,6 @@
         hasContent = true;
       }
 
-      // Row 3: Stanza 3, Stanza 4
       const stanza3 = document.getElementById('stanza3').value.trim();
       const stanza4 = document.getElementById('stanza4').value.trim();
       if (stanza3 || stanza4) {
@@ -380,7 +673,6 @@
         formattedLyrics += '</tr>';
       }
 
-      // Row 4: Chorus 2 (Highlighted)
       const chorus2 = document.getElementById('chorus2').value.trim();
       if (chorus2) {
         formattedLyrics += '<tr>' +
@@ -398,17 +690,13 @@
         return;
       }
 
-      // Add the new song to the songs object
       songs[title] = {
         title: document.getElementById('newSongTitle').value,
         capo: capo,
         lyrics: formattedLyrics
       };
-
-      // Update the song list in the index
+      saveSongs(); // Save to localStorage
       updateSongList();
-
-      // Return to index
       showIndex();
     }
 
@@ -418,6 +706,466 @@
       for (let key in songs) {
         songList.innerHTML += `<li onclick="showLyrics('${key}')" ontouchstart="showLyrics('${key}')">${songs[key].title}</li>`;
       }
+    }
+
+    // Service Worker registration for PWA (offline capability)
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/service-worker.js')
+          .then(registration => {
+            console.log('Service Worker registered with scope:', registration.scope);
+          })
+          .catch(error => {
+            console.error('Service Worker registration failed:', error);
+          });
+      });
+    }
+
+    function downloadUpdatedHTML() {
+      // Generate the updated HTML content with the current songs
+      const htmlContent = `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <title>My Songbook</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="My Songbook">
+  <link rel="manifest" href="/manifest.json">
+  <link rel="apple-touch-icon" href="/icon.png">
+  <style>
+    body { font-family: Arial, sans-serif; margin: 0; padding: 20px; }
+    .index { display: block; }
+    .lyrics { display: none; }
+    .editor { display: none; }
+    ul { list-style-type: none; padding: 0; }
+    li { cursor: pointer; margin: 10px 0; font-size: 18px; padding: 10px; }
+    li:hover, li:active { color: blue; }
+    .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+    h1 { margin: 0; }
+    .back-button, .add-button, .sync-button { 
+      background-color: #4CAF50; 
+      color: white; 
+      padding: 15px 30px; 
+      border: none; 
+      border-radius: 5px; 
+      cursor: pointer; 
+      font-size: 16px; 
+      min-width: 120px; 
+      min-height: 44px; 
+    }
+    .back-button:hover, .add-button:hover, .sync-button:hover, .back-button:active, .add-button:active, .sync-button:active { background-color: #45a049; }
+    table {
+      border-collapse: collapse;
+      width: 80%;
+      margin: 20px auto;
+    }
+    td {
+      border: 1px solid black;
+      padding: 10px;
+      vertical-align: top;
+    }
+    .chord { color: blue; font-weight: bold; }
+    .verse-title { background-color: #f0f0f0; font-weight: bold; }
+    .chorus { background-color: #ffe0e0; text-align: center; }
+    .highlight { background-color: #e6e6fa; }
+    .highlight-text { background-color: #e6e6fa; }
+    .editor-form { 
+      margin-top: 20px; 
+      padding: 20px; 
+      border: 1px solid #ccc; 
+      border-radius: 5px; 
+    }
+    .editor-form input, .editor-form textarea { 
+      width: 100%; 
+      margin: 10px 0; 
+      padding: 8px; 
+      box-sizing: border-box; 
+    }
+    .editor-form label { display: block; margin-bottom: 5px; }
+    .editor-form button { 
+      background-color: #008CBA; 
+      color: white; 
+      padding: 10px 20px; 
+      border: none; 
+      border-radius: 5px; 
+      cursor: pointer; 
+      margin-right: 10px; 
+      min-width: 100px; 
+      min-height: 44px; 
+    }
+    .editor-form button:hover, .editor-form button:active { background-color: #006d9c; }
+    @media (prefers-color-scheme: dark) {
+      body { background-color: #1a1a1a; color: #ffffff; }
+      .verse-title { background-color: #333; }
+      .chorus { background-color: #4a4a4a; }
+      .highlight, .highlight-text { background-color: #4a4a4a; }
+      table, td { border-color: #444; }
+    }
+  </style>
+</head>
+<body>
+  <div class="index">
+    <h1>My Songs</h1>
+    <div style="display: flex; gap: 10px;">
+      <button class="add-button" onclick="showEditor()" ontouchstart="showEditor()">Add New</button>
+      <button class="sync-button" onclick="downloadUpdatedHTML()" ontouchstart="downloadUpdatedHTML()">Sync to GitHub</button>
+    </div>
+    <ul id="songList">
+      ${Object.entries(songs).map(([key, song]) => `<li onclick="showLyrics('${key}')" ontouchstart="showLyrics('${key}')">${song.title}</li>`).join('')}
+    </ul>
+  </div>
+
+  <div class="lyrics">
+    <div class="header">
+      <div>
+        <h1 id="songTitle"></h1>
+        <p id="songCapo"></p>
+      </div>
+      <button class="back-button" onclick="showIndex()" ontouchstart="showIndex()">Back</button>
+    </div>
+    <div id="lyrics"></div>
+  </div>
+
+  <div class="editor">
+    <h1>Add New Song</h1>
+    <div class="editor-form">
+      <input type="text" id="newSongTitle" placeholder="Song Title" required>
+      <input type="text" id="newSongCapo" placeholder="Capo Information (e.g., Capo 3rd Am Em G)" required>
+      <label for="stanza1">1st Stanza:</label>
+      <textarea id="stanza1" placeholder="Lyrics with chords (e.g., [Am] Line 1<br>[Em] Line 2)" rows="4"></textarea>
+      <label for="stanza2">2nd Stanza:</label>
+      <textarea id="stanza2" placeholder="Lyrics with chords (e.g., [Am] Line 1<br>[Em] Line 2)" rows="4"></textarea>
+      <label for="chorus1">Chorus 1 (Highlighted, specify lines to highlight with *):</label>
+      <textarea id="chorus1" placeholder="Lyrics with chords (e.g., [G] Chorus line*<br>[C] Chorus line)" rows="4"></textarea>
+      <label for="stanza3">3rd Stanza:</label>
+      <textarea id="stanza3" placeholder="Lyrics with chords (e.g., [Am] Line 1<br>[Em] Line 2)" rows="4"></textarea>
+      <label for="stanza4">4th Stanza:</label>
+      <textarea id="stanza4" placeholder="Lyrics with chords (e.g., [Am] Line 1<br>[Em] Line 2)" rows="4"></textarea>
+      <label for="chorus2">Chorus 2 (Highlighted, specify lines to highlight with *):</label>
+      <textarea id="chorus2" placeholder="Lyrics with chords (e.g., [G] Chorus line*<br>[C] Chorus line)" rows="4"></textarea>
+      <button onclick="addSong()" ontouchstart="addSong()">Save Song</button>
+      <button onclick="showIndex()" ontouchstart="showIndex()">Cancel</button>
+    </div>
+  </div>
+
+  <script>
+    // Service Worker registration for PWA (offline capability)
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/service-worker.js')
+          .then(registration => {
+            console.log('Service Worker registered with scope:', registration.scope);
+          })
+          .catch(error => {
+            console.error('Service Worker registration failed:', error);
+          });
+      });
+    }
+
+    // Load songs from localStorage or use default if none exist
+    let songs = JSON.parse(localStorage.getItem('songs')) || {
+      'paintitblack': {
+        title: 'Paint it Black',
+        capo: 'Capo 2 / Dm A / Dm C F C Dm / Dm C F G A',
+        lyrics: '<table>' +
+          '<tr>' +
+            '<td>' +
+              '<p class="verse-title">1st</p>' +
+              '<p><span class="chord">[Dm]</span> I see a red door, And I want it painted black</p>' +
+              '<p>No colors anymore, I want them to turn black</p>' +
+              '<p><span class="chord">[A]</span> I see the girls walk by, Dressed in their summer clothes</p>' +
+              '<p>I have to turn my head, Until my darkness goes</p>' +
+            '</td>' +
+            '<td>' +
+              '<p class="verse-title">2nd</p>' +
+              '<p><span class="chord">[Dm]</span> I see a line of cars, And they\'re all painted black</p>' +
+              '<p>With flowers and my love, Both never to come back</p>' +
+              '<p><span class="chord">[A]</span> I see people turn their heads, And quickly look away</p>' +
+              '<p>Like a newborn baby, It just happens everyday</p>' +
+            '</td>' +
+          '</tr>' +
+          '<tr>' +
+            '<td colspan="2" class="chorus highlight">' +
+              '<p><span class="chord">[Dm]</span> I wanna see it painted, Painted black</p>' +
+              '<p><span class="chord">[Dm]</span> Black as night, Black as coal</p>' +
+              '<p><span class="chord">[Dm]</span> I wanna see the sun, Blotted out from the sky</p>' +
+              '<p><span class="chord">[Dm]</span> I wanna see it painted, Painted, painted <span class="highlight-text">Painted black, yeah</span></p>' +
+            '</td>' +
+          '</tr>' +
+          '<tr>' +
+            '<td>' +
+              '<p class="verse-title">3rd</p>' +
+              '<p><span class="chord">[Dm]</span> I look inside myself, And see my heart is black</p>' +
+              '<p>I see my red door, I must have it painted black</p>' +
+              '<p>Maybe then, I\'ll fade away, And not have to face the facts</p>' +
+              '<p>It\'s not easy facing up, When your whole world is black</p>' +
+            '</td>' +
+            '<td>' +
+              '<p class="verse-title">4th</p>' +
+              '<p><span class="chord">[Dm]</span> No more will my green sea, Go turn a deeper blue</p>' +
+              '<p>I could not foresee this thing, Happening to you</p>' +
+              '<p><span class="chord">[A]</span> If I look hard enough, Into the setting sun</p>' +
+              '<p>My love will laugh with me, Before the morning comes</p>' +
+            '</td>' +
+          '</tr>' +
+          '<tr>' +
+            '<td colspan="2" class="chorus highlight">' +
+              '<p><span class="chord">[Dm]</span> I wanna see it painted, Painted black</p>' +
+              '<p><span class="chord">[Dm]</span> Black as night, Black as coal</p>' +
+              '<p><span class="chord">[Dm]</span> I wanna see the sun, Blotted out from the sky</p>' +
+              '<p><span class="chord">[Dm]</span> I wanna see it painted, Painted, painted <span class="highlight-text">Painted black, yeah</span></p>' +
+            '</td>' +
+          '</tr>' +
+        '</table>'
+      },
+      'rollinginthedeep': {
+        title: 'Rolling in the Deep',
+        capo: 'Capo 3rd Am Em G Em G / F G Em/E F / Am G F G / F G Am G',
+        lyrics: '<table>' +
+          '<tr>' +
+            '<td>' +
+              '<p class="verse-title">1st</p>' +
+              '<p><span class="chord">[Am]</span> There\'s a fire starting in my heart,</p>' +
+              '<p>Reaching a fever pitch, it\'s bringing me out the dark</p>' +
+              '<p>Finally I can see you crystal clear</p>' +
+              '<p><span class="chord">[Am]</span> Go ahead and sell me out and I\'ll lay your ship bare</p>' +
+            '</td>' +
+            '<td>' +
+              '<p class="verse-title">2nd</p>' +
+              '<p><span class="chord">[Em]</span> See how I\'ll leave with every piece of you</p>' +
+              '<p>Don\'t <span class="highlight-text">underestimate</span> the things that I will do</p>' +
+              '<p>There\'s a fire starting in my heart</p>' +
+              '<p>Reaching a fever pitch and it\'s bringing me out the dark</p>' +
+            '</td>' +
+          '</tr>' +
+          '<tr>' +
+            '<td colspan="2" class="chorus highlight">' +
+              '<p>The scars of your love remind me of us, The scars of your love remind me of us, The scars of your love they leave me breathless</p>' +
+              '<p>I can\'t help feeling</p>' +
+              '<p>We could\'ve had it all, Rolling in the deep, You had my heart inside of your hand, And you played it to the beat</p>' +
+            '</td>' +
+          '</tr>' +
+          '<tr>' +
+            '<td>' +
+              '<p class="verse-title">3rd</p>' +
+              '<p><span class="chord">[Am]</span> Baby, I have no story to be told,</p>' +
+              '<p>But I\'ve heard one about you, now I\'m gonna make your head burn</p>' +
+              '<p>Think of me in the depths of your despair</p>' +
+              '<p>Make a home down there, as mine sure won\'t be shared</p>' +
+            '</td>' +
+            '<td>' +
+              '<p class="verse-title">4th</p>' +
+              '<p><span class="chord">[Am]</span> Throw your soul through every open door</p>' +
+              '<p>Count your blessings to find what you look for</p>' +
+              '<p>Turn my sorrow into treasured gold</p>' +
+              '<p>Pay me back in kind and reap just what you\'ve sown</p>' +
+            '</td>' +
+          '</tr>' +
+          '<tr>' +
+            '<td colspan="2" class="chorus highlight">' +
+              '<p>You\'re gonna wish you, never had met me</p>' +
+              '<p>Could have had it all...</p>' +
+            '</td>' +
+          '</tr>' +
+        '</table>'
+      },
+      'iwillsurvive': {
+        title: 'I Will Survive',
+        capo: 'Capo 2 / Am Dm G C',
+        lyrics: '<table>' +
+          '<tr>' +
+            '<td>' +
+              '<p class="verse-title">1st</p>' +
+              '<p>Sample Text for 1st Stanza</p>' +
+            '</td>' +
+            '<td>' +
+              '<p class="verse-title">2nd</p>' +
+              '<p>Sample text for 2nd</p>' +
+            '</td>' +
+          '</tr>' +
+          '<tr>' +
+            '<td colspan="2" class="chorus highlight">' +
+              '<p>Sample chorus</p>' +
+            '</td>' +
+          '</tr>' +
+        '</table>'
+      }
+    };
+
+    // Save songs to localStorage when updated
+    function saveSongs() {
+      localStorage.setItem('songs', JSON.stringify(songs));
+    }
+
+    // Load songs from localStorage and update the song list
+    function loadSongs() {
+      const storedSongs = JSON.parse(localStorage.getItem('songs'));
+      if (storedSongs) {
+        songs = storedSongs;
+      }
+      updateSongList();
+    }
+
+    // Call loadSongs when the page loads
+    window.onload = loadSongs;
+
+    function showLyrics(songKey) {
+      const song = songs[songKey];
+      document.getElementById('songTitle').textContent = song.title;
+      document.getElementById('songCapo').textContent = song.capo || '';
+      document.getElementById('lyrics').innerHTML = song.lyrics;
+      document.querySelector('.index').style.display = 'none';
+      document.querySelector('.lyrics').style.display = 'block';
+    }
+
+    function showIndex() {
+      document.querySelector('.index').style.display = 'block';
+      document.querySelector('.lyrics').style.display = 'none';
+      document.querySelector('.editor').style.display = 'none';
+      document.getElementById('lyrics').innerHTML = '';
+      document.getElementById('songTitle').textContent = '';
+      document.getElementById('songCapo').textContent = '';
+    }
+
+    function showEditor() {
+      document.querySelector('.index').style.display = 'none';
+      document.querySelector('.lyrics').style.display = 'none';
+      document.querySelector('.editor').style.display = 'block';
+      document.getElementById('newSongTitle').value = '';
+      document.getElementById('newSongCapo').value = '';
+      document.getElementById('stanza1').value = '';
+      document.getElementById('stanza2').value = '';
+      document.getElementById('chorus1').value = '';
+      document.getElementById('stanza3').value = '';
+      document.getElementById('stanza4').value = '';
+      document.getElementById('chorus2').value = '';
+    }
+
+    function addSong() {
+      const title = document.getElementById('newSongTitle').value.trim().toLowerCase().replace(' ', '');
+      const capo = document.getElementById('newSongCapo').value;
+      let formattedLyrics = '<table>';
+
+      function formatLines(textareaId, isChorus = false) {
+        const lines = document.getElementById(textareaId).value.split('\n').map(line => line.trim()).filter(line => line);
+        return lines.map(line => {
+          if (isChorus && line.includes('*')) {
+            return '<p>' + line.replace('[', '<span class="chord">[').replace(']', ']</span>').replace('*', '<span class="highlight-text">') + '</span></p>';
+          }
+          return '<p>' + line.replace('[', '<span class="chord">[').replace(']', ']</span>') + '</p>';
+        }).join('');
+      }
+
+      let hasContent = false;
+
+      const stanza1 = document.getElementById('stanza1').value.trim();
+      const stanza2 = document.getElementById('stanza2').value.trim();
+      if (stanza1 || stanza2) {
+        formattedLyrics += '<tr>';
+        if (stanza1) {
+          formattedLyrics += '<td>' +
+            '<p class="verse-title">1st</p>' +
+            formatLines('stanza1') +
+            '</td>';
+          hasContent = true;
+        } else {
+          formattedLyrics += '<td></td>';
+        }
+        if (stanza2) {
+          formattedLyrics += '<td>' +
+            '<p class="verse-title">2nd</p>' +
+            formatLines('stanza2') +
+            '</td>';
+          hasContent = true;
+        } else {
+          formattedLyrics += '<td></td>';
+        }
+        formattedLyrics += '</tr>';
+      }
+
+      const chorus1 = document.getElementById('chorus1').value.trim();
+      if (chorus1) {
+        formattedLyrics += '<tr>' +
+          '<td colspan="2" class="chorus highlight">' +
+            formatLines('chorus1', true) +
+            '</td>' +
+          '</tr>';
+        hasContent = true;
+      }
+
+      const stanza3 = document.getElementById('stanza3').value.trim();
+      const stanza4 = document.getElementById('stanza4').value.trim();
+      if (stanza3 || stanza4) {
+        formattedLyrics += '<tr>';
+        if (stanza3) {
+          formattedLyrics += '<td>' +
+            '<p class="verse-title">3rd</p>' +
+            formatLines('stanza3') +
+            '</td>';
+          hasContent = true;
+        } else {
+          formattedLyrics += '<td></td>';
+        }
+        if (stanza4) {
+          formattedLyrics += '<td>' +
+            '<p class="verse-title">4th</p>' +
+            formatLines('stanza4') +
+            '</td>';
+          hasContent = true;
+        } else {
+          formattedLyrics += '<td></td>';
+        }
+        formattedLyrics += '</tr>';
+      }
+
+      const chorus2 = document.getElementById('chorus2').value.trim();
+      if (chorus2) {
+        formattedLyrics += '<tr>' +
+          '<td colspan="2" class="chorus highlight">' +
+            formatLines('chorus2', true) +
+            '</td>' +
+          '</tr>';
+        hasContent = true;
+      }
+
+      formattedLyrics += '</table>';
+
+      if (!hasContent) {
+        alert('Please provide at least one stanza or chorus.');
+        return;
+      }
+
+      songs[title] = {
+        title: document.getElementById('newSongTitle').value,
+        capo: capo,
+        lyrics: formattedLyrics
+      };
+      saveSongs(); // Save to localStorage
+      updateSongList();
+      showIndex();
+    }
+
+    function updateSongList() {
+      const songList = document.getElementById('songList');
+      songList.innerHTML = '';
+      for (let key in songs) {
+        songList.innerHTML += `<li onclick="showLyrics('${key}')" ontouchstart="showLyrics('${key}')">${songs[key].title}</li>`;
+      }
+    }
+
+    // Service Worker registration for PWA (offline capability)
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/service-worker.js')
+          .then(registration => {
+            console.log('Service Worker registered with scope:', registration.scope);
+          })
+          .catch(error => {
+            console.error('Service Worker registration failed:', error);
+          });
+      });
     }
   </script>
 </body>
